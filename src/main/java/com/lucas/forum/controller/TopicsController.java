@@ -3,11 +3,13 @@ package com.lucas.forum.controller;
 import com.lucas.forum.controller.DTO.DetailsTopicDTO;
 import com.lucas.forum.controller.DTO.TopicDTO;
 import com.lucas.forum.controller.form.TopicForm;
+import com.lucas.forum.controller.form.TopicFormUpdate;
 import com.lucas.forum.model.Topic;
 import com.lucas.forum.repository.CourseRepository;
 import com.lucas.forum.repository.TopicRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -49,5 +51,13 @@ public class TopicsController {
     public DetailsTopicDTO details(@PathVariable Long id) {
         Topic topic = topicRepository.getById(id);
         return new DetailsTopicDTO(topic);
+    }
+
+    @PutMapping("/{id}")
+    @Transactional
+    public ResponseEntity<TopicDTO> update(@PathVariable Long id, @RequestBody @Valid TopicFormUpdate formUpdate) {
+        Topic topic = formUpdate.update(id, topicRepository);
+
+        return ResponseEntity.ok(new TopicDTO(topic));
     }
 }
