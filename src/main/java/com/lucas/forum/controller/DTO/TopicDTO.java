@@ -1,6 +1,7 @@
 package com.lucas.forum.controller.DTO;
 
 import com.lucas.forum.model.Topic;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,8 +21,8 @@ public class TopicDTO {
         this.dateCreation = topic.getDateCreation();
     }
 
-    public static List<TopicDTO> convert(List<Topic> topics) {
-        return topics.stream().map(TopicDTO::new).collect(Collectors.toList());
+    public static Page<TopicDTO> convert(Page<Topic> topics) {
+        return topics.map(TopicDTO::new);
     }
 
     public Long getId() {

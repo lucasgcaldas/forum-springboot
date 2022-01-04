@@ -8,6 +8,11 @@ import com.lucas.forum.model.Topic;
 import com.lucas.forum.repository.CourseRepository;
 import com.lucas.forum.repository.TopicRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +21,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/topics")
@@ -28,12 +34,13 @@ public class TopicsController {
     private CourseRepository courseRepository;
 
     @GetMapping
-    public List<TopicDTO> list(String courseName) {
-        List<Topic> topics;
+    public Page<TopicDTO> list(@RequestParam(required = false) String courseName, @PageableDefault(sort = "id", direction = Sort.Direction.DESC, page = 0, size = 10) Pageable pageable) {
+
+        Page<Topic> topics;
         if (courseName == null) {
-            topics = topicRepository.findAll();
+            topics = topicRepository.findAll(pageable);
         } else {
-            topics = topicRepository.findByCourseName(courseName);
+            topics = topicRepository.findByCourseName(courseName, pageable);
         }
         return TopicDTO.convert(topics);
     }
@@ -49,23 +56,30 @@ public class TopicsController {
     }
 
     @GetMapping("/{id}")
-    public DetailsTopicDTO details(@PathVariable Long id) {
-        Topic topic = topicRepository.getById(id);
-        return new DetailsTopicDTO(topic);
+    public ResponseEntity<DetailsTopicDTO> details(@PathVariable Long id) {
+        Optional<Topic> topic = topicRepository.findById(id);
+        return topic.map(value -> ResponseEntity.ok(new DetailsTopicDTO(value))).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
     @Transactional
     public ResponseEntity<TopicDTO> update(@PathVariable Long id, @RequestBody @Valid TopicFormUpdate formUpdate) {
-        Topic topic = formUpdate.update(id, topicRepository);
-
-        return ResponseEntity.ok(new TopicDTO(topic));
+        Optional<Topic> optionalTopic = topicRepository.findById(id);
+        if(optionalTopic.isPresent()){
+            Topic topic = formUpdate.update(id, topicRepository);
+            return ResponseEntity.ok(new TopicDTO(topic));
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<?> delete(@PathVariable Long id){
-        topicRepository.deleteById(id);
-        return ResponseEntity.ok().build();
+        Optional<Topic> optionalTopic = topicRepository.findById(id);
+        if (optionalTopic.isPresent()){
+            topicRepository.deleteById(id);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }
