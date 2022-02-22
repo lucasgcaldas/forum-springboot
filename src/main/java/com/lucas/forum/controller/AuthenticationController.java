@@ -1,6 +1,7 @@
 package com.lucas.forum.controller;
 
 import com.lucas.forum.config.security.TokenService;
+import com.lucas.forum.controller.DTO.TokenDTO;
 import com.lucas.forum.controller.form.LoginForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,16 +27,16 @@ public class AuthenticationController {
     private TokenService tokenService;
 
     @PostMapping
-    public ResponseEntity<?> authentic(@RequestBody @Valid LoginForm form) {
+    public ResponseEntity<TokenDTO> authentic(@RequestBody @Valid LoginForm form) {
         UsernamePasswordAuthenticationToken loginData = form.convert();
 
         try {
             Authentication authenticate = authenticationManager.authenticate(loginData);
             String token = tokenService.generateToken(authenticate);
 
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(new TokenDTO(token, "Bearer"));
         }catch (AuthenticationException e){
-            return ResponseEntity.badRequest().buid();
+            return ResponseEntity.badRequest().build();
         }
     }
 }
